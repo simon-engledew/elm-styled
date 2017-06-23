@@ -3,6 +3,7 @@ module Styled
         ( declaration
           -- Misc
         , styled
+        , animations
         , media
         , mixin
         , important
@@ -634,10 +635,11 @@ module Styled
 
 -}
 
+import Html
 import Html.Attributes
 import Internal
-import Native.Css
 import Styled.Types exposing (..)
+import Html.Lazy exposing (lazy)
 import VirtualDom exposing (Node, Property)
 
 
@@ -645,6 +647,13 @@ import VirtualDom exposing (Node, Property)
    Misc
 -}
 
+animations : List (Keyframes compatible) -> Node msg
+animations keys =
+    style (List.map .css keys)
+
+style : List String -> Node msg
+style css =
+    VirtualDom.node "style" [] [Html.text (String.join "" css)]
 
 {-|
     header =
@@ -662,7 +671,6 @@ styled :
     -> List (Node msg)
     -> Node msg
 styled node rules properties children =
-    {- We need to use 2 let blocks because the inner styles needs to be created first so the outer styles can override them. -}
     let
         className =
             Internal.createHash "class" rules
@@ -670,17 +678,11 @@ styled node rules properties children =
         classNameProperty =
             Html.Attributes.class className
 
-        nodeWithClassName =
-            node (classNameProperty :: properties) children
-    in
-        let
-            css =
-                Internal.createCss ("." ++ className) rules
+        css =
+            Internal.createCss ("." ++ className) rules
 
-            insertedCss =
-                List.map Native.Css.insert css
-        in
-            nodeWithClassName
+    in
+        node (classNameProperty :: properties) (style css :: children)
 
 
 {-| Apply a media query to a set of rules.

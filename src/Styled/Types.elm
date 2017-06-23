@@ -85,6 +85,7 @@ type alias Keyframes compatible =
     { compatible
         | value : String
         , keyframes : Compatible
+        , css : String
     }
 
 
