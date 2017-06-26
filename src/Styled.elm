@@ -2,7 +2,10 @@ module Styled
     exposing
         ( declaration
           -- Misc
-        , styled
+        , toRule
+        , toRules
+        , getClassName
+        , stylesheet
         , media
         , mixin
         , important
@@ -636,51 +639,45 @@ module Styled
 
 import Html.Attributes
 import Internal
-import Native.Css
 import Styled.Types exposing (..)
-import VirtualDom exposing (Node, Property)
+import VirtualDom exposing (Node, Property, text)
+import AllDict exposing (AllDict)
 
 
 {-
    Misc
 -}
 
+type alias CssRule = {css : String, className : String}
+type alias CssRules k = {
+    getter : (k -> CssRule),
+    classes : List String
+}
 
-{-|
-    header =
-        styled div
-            [ fontSize (rem 2)
-            , lineHeight (num 1.5)
-            , padding (rem 1)
-            , border (px 1) solid black
-            ]
--}
-styled :
-    (List (Property msg) -> List (Node msg) -> Node msg)
-    -> List Rule
-    -> List (Property msg)
-    -> List (Node msg)
-    -> Node msg
-styled node rules properties children =
-    {- We need to use 2 let blocks because the inner styles needs to be created first so the outer styles can override them. -}
+toRules : (k -> CssRule) -> (List String) -> CssRules k
+toRules getter classes =
+    {getter = getter, classes = classes}
+
+getClassName : (k -> CssRule) -> k -> String
+getClassName getter identifier =
+    (getter identifier).className
+
+stylesheet : CssRules k -> ((k -> String) -> VirtualDom.Node msg) -> VirtualDom.Node msg
+stylesheet ruleset css =
+    VirtualDom.node "div" [] [VirtualDom.node "style" [] (List.map text ruleset.classes), css (getClassName ruleset.getter)]
+
+toRule : List Rule -> CssRule
+toRule rules =
     let
         className =
             Internal.createHash "class" rules
-
-        classNameProperty =
-            Html.Attributes.class className
-
-        nodeWithClassName =
-            node (classNameProperty :: properties) children
+        css =
+            Internal.createCss ("." ++ className) rules
     in
-        let
-            css =
-                Internal.createCss ("." ++ className) rules
-
-            insertedCss =
-                List.map Native.Css.insert css
-        in
-            nodeWithClassName
+        {
+            css = (String.join "" css),
+            className = className
+        }
 
 
 {-| Apply a media query to a set of rules.

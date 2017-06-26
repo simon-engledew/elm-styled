@@ -12,7 +12,6 @@ If you want to do custom animations you should use the keyframes function and us
 -}
 
 import Internal
-import Native.Css
 import Styled.Types exposing (..)
 
 
@@ -60,9 +59,8 @@ keyframes steps =
                 ++ cssSteps
                 ++ " } "
 
-        insertedCss =
-            Native.Css.insert css
     in
         { value = keyframesName
         , keyframes = Compatible
+        , css = css
         }

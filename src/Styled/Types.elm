@@ -61,6 +61,8 @@ These types are used internally to choose which value is compatible with which p
 @docs Compatible, Rule, Keyframes
 -}
 
+import AllDict exposing (AllDict)
+
 {-
    Misc
 -}
@@ -79,15 +81,13 @@ type Rule
     | Media String (List Rule)
     | Mixin (List Rule)
 
-
 {-| -}
 type alias Keyframes compatible =
     { compatible
         | value : String
         , keyframes : Compatible
+        , css : String
     }
-
-
 
 {-
    CSS Data Types
